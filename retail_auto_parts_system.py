@@ -8,16 +8,16 @@ app = Flask(__name__)
 # Database connection settings
 DB_HOST = 'localhost'  # Or your remote DB host (e.g., 'db-host-name.com')
 DB_USER = 'root'       # Database username
-DB_PASSWORD = 'YOUR_PASSWORD_HERE'  # Replace with your actual password
+DB_PASSWORD = 'password'  # Replace with actual password
 DB_NAME = 'auto_parts_db'  # Database name
 
 # db connect
 def get_connection():
     return mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="YOUR_PASSWORD_HERE",   # << change this
-        database="auto_parts_db"
+        host=DB_HOST,
+        user=DB_USER,
+        password=DB_PASSWORD,   # << change this
+        database=DB_NAME
     )
 
 # get any store id
@@ -46,35 +46,25 @@ def get_employee_id():
 
 #functions to be changed to work with Flask (return data, no print):
 # customer login
-def customer_login():
-    u = input("Username: ")
-    p = getpass("Password: ")
-
+def customer_login(un, pw):
     conn = get_connection()
     cur = conn.cursor(dictionary=True)
 
+    #SQL Query
     cur.execute("""
         SELECT customer_id, name
         FROM customers
         WHERE username = %s AND password = %s
-    """, (u, p))
+    """, (un, pw))
 
     row = cur.fetchone()
     cur.close()
     conn.close()
 
-    if row:
-        print(f"\nWelcome {row['name']}\n")
-        return row["customer_id"]
-    else:
-        print("\nLogin failed.\n")
-        return None
+    return row
 
 # employee login
-def employee_login():
-    u = input("Username: ")
-    p = getpass("Password: ")
-
+def employee_login(un, pw):
     conn = get_connection()
     cur = conn.cursor(dictionary=True)
 
@@ -82,28 +72,30 @@ def employee_login():
         SELECT employee_id, name
         FROM employee
         WHERE username = %s AND password = %s
-    """, (u, p))
+    """, (un, pw))
 
     row = cur.fetchone()
     cur.close()
     conn.close()
 
-    if row:
-        print(f"\nWelcome {row['name']}\n")
-        return row["employee_id"]
-    else:
-        print("\nLogin failed.\n")
-        return None
+    return row
 
 @app.route('/')
 def home():
     return render_template('home.html')
 
+#configure: direct to employee or customer login
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
+        user = customer_login(username, password)
+        if user:
+            return redirect(url_for('customer_menu', customer_id=user['customer_id']))
+        else:
+            flash("Login failed.")
+    return render_template('login.html')
 
 # show parts
 def list_parts():
@@ -199,28 +191,14 @@ def view_customer_orders(cid):
 #Flask routes:
 
 # customer menu
+@app.route('/customer_menu/<int:customer_id>')
 def customer_menu():
     cid = customer_login()
     if not cid:
         return
 
-    while True:
-        print("1. View Parts")
-        print("2. Place Order")
-        print("3. View My Orders")
-        print("4. Logout")
-        ch = input("Choose: ").strip()
-
-        if ch == "1":
-            list_parts()
-        elif ch == "2":
-            place_order(cid)
-        elif ch == "3":
-            view_customer_orders(cid)
-        elif ch == "4":
-            break
-        else:
-            print("Invalid.\n")
+    parts = list_parts()
+    return render_template('customer_menu.html', parts=parts)
 
 # add part
 def add_part():
