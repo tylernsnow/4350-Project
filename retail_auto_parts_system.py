@@ -20,6 +20,7 @@ def get_connection():
         database=DB_NAME
     )
 
+#TODO:
 # get any store id
 def get_store_id():
     conn = get_connection()
@@ -32,6 +33,7 @@ def get_store_id():
         return row[0]
     return None
 
+#TODO:
 # get any employee id
 def get_employee_id():
     conn = get_connection()
@@ -44,7 +46,6 @@ def get_employee_id():
         return row[0]
     return None
 
-#functions to be changed to work with Flask (return data, no print):
 # customer login
 def customer_login(un, pw):
     conn = get_connection()
@@ -109,6 +110,7 @@ def emp_login():
             flash("Login failed.")
     return render_template('employee_login.html')
 
+#TODO:
 # show parts
 def list_parts():
     conn = get_connection()
@@ -123,6 +125,7 @@ def list_parts():
     cur.close()
     conn.close()
 
+#TODO:
 # place order
 def place_order(cid):
     list_parts()
@@ -180,6 +183,7 @@ def place_order(cid):
 
     print(f"\nOrder placed. ID: {oid} | Total: ${total}\n")
 
+#TODO:
 # view customer orders
 def view_customer_orders(cid):
     conn = get_connection()
@@ -205,13 +209,13 @@ def view_customer_orders(cid):
 # customer menu
 @app.route('/customer_menu/<int:customer_id>')
 def customer_menu(customer_id):
-    cid = customer_login()
-    if not cid:
-        return
 
+    #should go to the customer menu of the correct customer_id
+    #NOTE: customer login redirects here, need to write HTML for customer_menu
     parts = list_parts()
     return render_template('customer_menu.html', parts=parts)
 
+#TODO:
 # add part
 def add_part():
     name = input("Name: ")
@@ -242,6 +246,7 @@ def add_part():
 
     print("\nPart added.\n")
 
+#TODO:
 # view all orders
 def view_all_orders():
     conn = get_connection()
@@ -267,47 +272,11 @@ def view_all_orders():
 
 @app.route('/store_menu')
 # store menu
-def store_menu():
-    eid = employee_login()
-    if not eid:
-        return
+def store_menu(employee_id):
 
-    while True:
-        print("1. View Parts")
-        print("2. Add Part")
-        print("3. View Orders")
-        print("4. Logout")
-        ch = input("Choose: ").strip()
-
-        if ch == "1":
-            list_parts()
-        elif ch == "2":
-            add_part()
-        elif ch == "3":
-            view_all_orders()
-        elif ch == "4":
-            break
-        else:
-            print("Invalid.\n")
-
-# main
-def main_menu():
-    while True:
-        print("\n=== Retail Auto Parts System ===")
-        print("1. Customer Mode")
-        print("2. Store Mode")
-        print("3. Exit")
-        ch = input("Choose: ").strip()
-
-        if ch == "1":
-            customer_menu()
-        elif ch == "2":
-            store_menu()
-        elif ch == "3":
-            print("Bye.")
-            break
-        else:
-            print("Invalid.\n")
+    #should go to the store menu of the employee_id
+    #NOTE: employee login redirects here, need to write HTML for employee_menu
+    return render_template('store_menu.html')
 
 if __name__ == "__main__":
-    main_menu()
+    app.run(debug = True)
