@@ -85,8 +85,8 @@ def home():
     return render_template('home.html')
 
 #configure: direct to employee or customer login
-@app.route('/login', methods=['GET', 'POST'])
-def login():
+@app.route('/cus_login', methods=['GET', 'POST'])
+def cus_login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
@@ -95,7 +95,19 @@ def login():
             return redirect(url_for('customer_menu', customer_id=user['customer_id']))
         else:
             flash("Login failed.")
-    return render_template('login.html')
+    return render_template('customer_login.html')
+
+@app.route('/emp_login', methods=['GET', 'POST'])
+def emp_login():
+    if request.method =='POST':
+        username = request.form['username']
+        password = request.form['password']
+        user = employee_login(username, password)
+        if user:
+            return redirect(url_for('employee_menu', employee_id=user['employee_id']))
+        else:
+            flash("Login failed.")
+    return render_template('employee_login.html')
 
 # show parts
 def list_parts():
@@ -192,7 +204,7 @@ def view_customer_orders(cid):
 
 # customer menu
 @app.route('/customer_menu/<int:customer_id>')
-def customer_menu():
+def customer_menu(customer_id):
     cid = customer_login()
     if not cid:
         return
@@ -253,6 +265,7 @@ def view_all_orders():
     cur.close()
     conn.close()
 
+@app.route('/store_menu')
 # store menu
 def store_menu():
     eid = employee_login()
