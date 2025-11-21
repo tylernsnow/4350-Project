@@ -1,5 +1,15 @@
+from flask import Flask, render_template, request, redirect, url_for, flash
 import mysql.connector
 from getpass import getpass
+
+app = Flask(__name__)
+#secret key
+
+# Database connection settings
+DB_HOST = 'localhost'  # Or your remote DB host (e.g., 'db-host-name.com')
+DB_USER = 'root'       # Database username
+DB_PASSWORD = 'YOUR_PASSWORD_HERE'  # Replace with your actual password
+DB_NAME = 'auto_parts_db'  # Database name
 
 # db connect
 def get_connection():
@@ -34,6 +44,7 @@ def get_employee_id():
         return row[0]
     return None
 
+#functions to be changed to work with Flask (return data, no print):
 # customer login
 def customer_login():
     u = input("Username: ")
@@ -83,6 +94,16 @@ def employee_login():
     else:
         print("\nLogin failed.\n")
         return None
+
+@app.route('/')
+def home():
+    return render_template('home.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
 
 # show parts
 def list_parts():
@@ -174,6 +195,8 @@ def view_customer_orders(cid):
 
     cur.close()
     conn.close()
+
+#Flask routes:
 
 # customer menu
 def customer_menu():
