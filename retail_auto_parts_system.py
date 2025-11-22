@@ -141,7 +141,7 @@ def place_order(cid):
     cur = conn.cursor()
 
     # get price
-    cur.execute("SELECT price FROM autopart WHERE part_id = %s", (pid,))
+    cur.execute("SELECT price FROM AutoPart WHERE part_id = %s", (pid,))
     row = cur.fetchone()
     if not row:
         print("Invalid part.\n")
