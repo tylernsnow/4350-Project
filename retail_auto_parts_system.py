@@ -16,7 +16,7 @@ def get_connection():
     return mysql.connector.connect(
         host=DB_HOST,
         user=DB_USER,
-        password=DB_PASSWORD,   # << change this
+        password=DB_PASSWORD,
         database=DB_NAME
     )
 
@@ -110,7 +110,6 @@ def emp_login():
             flash("Login failed.")
     return render_template('employee_login.html')
 
-#TODO:
 # show parts
 def list_parts():
     conn = get_connection()
@@ -182,7 +181,6 @@ def place_order(cid):
 
     print(f"\nOrder placed. ID: {oid} | Total: ${total}\n")
 
-#TODO:
 # view customer orders
 def view_customer_orders(customer_id):
     conn = get_connection()
