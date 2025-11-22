@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Store {{store_id}} Menu</title>
+    <title>Store Menu</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -34,6 +34,9 @@
     </style>
 </head>
 <body>
-
+    <h1>Store {{ store_id }}</h1>
+    <a href="{{ url_for('all_orders') }}" class="btn">View Orders</a>
+    <a href="{{ url_for('home') }}" class="btn">Home</a>
+    <a href="{{ url_for('add_part') }}" class="btn">Add Part</a>
 </body>
 </html>

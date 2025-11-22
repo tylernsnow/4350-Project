@@ -20,17 +20,20 @@ def get_connection():
         database=DB_NAME
     )
 
-#TODO:
-# get any store id
-def get_store_id():
+# get store id from employee id
+def get_store_id(employee_id):
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("SELECT store_id FROM Store LIMIT 1")
+    cur.execute("""
+        SELECT store_id
+        FROM Employee
+        WHERE employee_id = %s
+    """, (employee_id,))
     row = cur.fetchone()
     cur.close()
     conn.close()
     if row:
-        return row[0]
+        return row['store_id']
     return None
 
 #TODO:
@@ -212,8 +215,8 @@ def customer_menu(customer_id):
     orders=view_customer_orders(customer_id)
     return render_template('customer_menu.html', parts=parts, orders=orders)
 
-#TODO:
 # add part
+@app.route('/add_part')
 def add_part():
     name = input("Name: ")
     cat = input("Category: ")
@@ -221,29 +224,35 @@ def add_part():
     qty_str = input("Qty: ").strip()
     cond = input("Condition: ")
     manu = input("Manufacturer: ")
+    if request.method == 'POST':
+        name=request.form['name']
+        price_str=request.form['price'].strip()
+        qty_str=request.form['quantity'].strip()
+        condition=request.form['condition']
+        manufacturer=request.form['manufacturer']
 
-    try:
-        price = float(price_str)
-        qty = int(qty_str)
-    except ValueError:
-        print("Invalid price or qty.\n")
-        return
+        try:
+            price = float(price_str)
+            qty = int(qty_str)
+        except ValueError:
+            print("Invalid price or qty.\n")
+            return
 
-    conn = get_connection()
-    cur = conn.cursor()
+        conn = get_connection()
+        cur = conn.cursor()
 
-    cur.execute("""
-        INSERT INTO AutoPart (part_name, category, price, stock_qty, condition, manufacturer)
-        VALUES (%s, %s, %s, %s, %s, %s)
-    """, (name, cat, price, qty, cond, manu))
+        cur.execute("""
+            INSERT INTO AutoPart (part_name, category, price, stock_qty, condition, manufacturer)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (name, cat, price, qty, cond, manu))
 
-    conn.commit()
-    cur.close()
-    conn.close()
+        conn.commit()
+        cur.close()
+        conn.close()
 
-    print("\nPart added.\n")
+        return render_template('add_part.html', message="Part added successfully")
+    return render_template('add_part.html')
 
-#TODO:
 # view all orders
 @app.route('/all_orders')
 def view_all_orders():
@@ -260,12 +269,6 @@ def view_all_orders():
         ORDER BY o.order_id DESC
     """)
 
-    print("\n--- All Orders ---")
-    for x in cur:
-        print(f"{x['order_id']} | {x['customer']} | {x['store']} | {x['employee']} | ${x['total_amount']} | {x['payment_status']}")
-    print("------------------\n")
-    orders=cur.fetchall()
-
     cur.close()
     conn.close()
     return render_template('all_orders.html')
@@ -277,9 +280,9 @@ def store_menu(employee_id):
     #should go to the store menu of the employee_id
     #NOTE: employee login redirects here, need to write HTML for employee_menu
     #relevant functions: view_all_orders, add_part, place_order, get_store_id, get_employee_id
-    #include button to view all orders, button to add part, button to place order
-
-    return render_template('store_menu.html')
+    #include button to add part, button to place order
+    store_id=get_store_id(employee_id)
+    return render_template('store_menu.html', store_id)
 
 if __name__ == "__main__":
     app.run(debug = True)
