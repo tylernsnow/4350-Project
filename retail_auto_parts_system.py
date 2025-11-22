@@ -8,7 +8,7 @@ app = Flask(__name__)
 # Database connection settings
 DB_HOST = 'localhost'  # Or your remote DB host (e.g., 'db-host-name.com')
 DB_USER = 'root'       # Database username
-DB_PASSWORD = 'password'  # Replace with actual password
+DB_PASSWORD = 'Ar4545325543'  # Replace with actual password
 DB_NAME = 'auto_parts_db'  # Database name
 
 # db connect
@@ -25,7 +25,7 @@ def get_connection():
 def get_store_id():
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("SELECT store_id FROM store LIMIT 1")
+    cur.execute("SELECT store_id FROM Store LIMIT 1")
     row = cur.fetchone()
     cur.close()
     conn.close()
@@ -38,7 +38,7 @@ def get_store_id():
 def get_employee_id():
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("SELECT employee_id FROM employee LIMIT 1")
+    cur.execute("SELECT employee_id FROM Employee LIMIT 1")
     row = cur.fetchone()
     cur.close()
     conn.close()
@@ -54,7 +54,7 @@ def customer_login(un, pw):
     #SQL Query
     cur.execute("""
         SELECT customer_id, name
-        FROM customers
+        FROM Customer
         WHERE username = %s AND password = %s
     """, (un, pw))
 
@@ -71,7 +71,7 @@ def employee_login(un, pw):
 
     cur.execute("""
         SELECT employee_id, name
-        FROM employee
+        FROM Employee
         WHERE username = %s AND password = %s
     """, (un, pw))
 
@@ -116,7 +116,7 @@ def list_parts():
     conn = get_connection()
     cur = conn.cursor(dictionary=True)
 
-    cur.execute("SELECT * FROM autopart")
+    cur.execute("SELECT * FROM AutoPart")
     parts = cur.fetchall()
 
     cur.close()
@@ -235,7 +235,7 @@ def add_part():
     cur = conn.cursor()
 
     cur.execute("""
-        INSERT INTO autopart (part_name, category, price, stock_qty, condition, manufacturer)
+        INSERT INTO AutoPart (part_name, category, price, stock_qty, condition, manufacturer)
         VALUES (%s, %s, %s, %s, %s, %s)
     """, (name, cat, price, qty, cond, manu))
 
@@ -252,12 +252,12 @@ def view_all_orders():
     cur = conn.cursor(dictionary=True)
 
     cur.execute("""
-        SELECT o.order_id, c.name AS customer, s.store_name AS store,
+        SELECT o.order_id, c.name AS Customer, s.store_name AS store,
                e.name AS employee, o.total_amount, o.payment_status
         FROM `Order` o
-        LEFT JOIN customers c ON o.customer_id = c.customer_id
-        LEFT JOIN store s ON o.store_id = s.store_id
-        LEFT JOIN employee e ON o.employee_id = e.employee_id
+        LEFT JOIN Customer c ON o.customer_id = c.customer_id
+        LEFT JOIN Store s ON o.store_id = s.store_id
+        LEFT JOIN Employee e ON o.employee_id = e.employee_id
         ORDER BY o.order_id DESC
     """)
 
