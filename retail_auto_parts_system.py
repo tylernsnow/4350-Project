@@ -88,7 +88,7 @@ def employee_login(un, pw):
 def home():
     return render_template('home.html')
 
-#configure: direct to employee or customer login
+#customer login: routes to customer mode
 @app.route('/cus_login', methods=['GET', 'POST'])
 def cus_login():
     if request.method == 'POST':
@@ -101,6 +101,7 @@ def cus_login():
             flash("Login failed.")
     return render_template('customer_login.html')
 
+#employee login: routes to store mode
 @app.route('/emp_login', methods=['GET', 'POST'])
 def emp_login():
     if request.method =='POST':
