@@ -3,10 +3,10 @@ import mysql.connector
 from getpass import getpass
 
 app = Flask(__name__)
-#secret key
+app.secret_key = "change_this_secret"  # secret key needed for session
 
 # Database connection settings
-DB_HOST = 'localhost'  # Or your remote DB host (e.g., 'db-host-name.com')
+DB_HOST = 'localhost'  # Or remote DB host if not run locally
 DB_USER = 'root'       # Database username
 DB_PASSWORD = 'Ar4545325543'  # Replace with actual password
 DB_NAME = 'auto_parts_db'  # Database name
@@ -206,8 +206,8 @@ def view_customer_orders(customer_id):
 def customer_menu(customer_id):
 
     #should go to the customer menu of the correct customer_id
-    #NOTE: customer login redirects here, need to write HTML for customer_menu
     #relevant functions: list_parts, view_customer_orders, place_order
+    #TODO: add button to place_order
     parts = list_parts()
     orders=view_customer_orders(customer_id)
     return render_template('customer_menu.html', parts=parts, orders=orders)
@@ -245,6 +245,7 @@ def add_part():
 
 #TODO:
 # view all orders
+@app.route('/all_orders')
 def view_all_orders():
     conn = get_connection()
     cur = conn.cursor(dictionary=True)
@@ -263,9 +264,11 @@ def view_all_orders():
     for x in cur:
         print(f"{x['order_id']} | {x['customer']} | {x['store']} | {x['employee']} | ${x['total_amount']} | {x['payment_status']}")
     print("------------------\n")
+    orders=cur.fetchall()
 
     cur.close()
     conn.close()
+    return render_template('all_orders.html')
 
 @app.route('/store_menu')
 # store menu
@@ -273,6 +276,9 @@ def store_menu(employee_id):
 
     #should go to the store menu of the employee_id
     #NOTE: employee login redirects here, need to write HTML for employee_menu
+    #relevant functions: view_all_orders, add_part, place_order, get_store_id, get_employee_id
+    #include button to view all orders, button to add part, button to place order
+
     return render_template('store_menu.html')
 
 if __name__ == "__main__":
