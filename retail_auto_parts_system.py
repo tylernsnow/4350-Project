@@ -105,7 +105,7 @@ def emp_login():
         password = request.form['password']
         user = employee_login(username, password)
         if user:
-            return redirect(url_for('employee_menu', employee_id=user['employee_id']))
+            return redirect(url_for('store_menu', employee_id=user['employee_id']))
         else:
             flash("Login failed.")
     return render_template('employee_login.html')
