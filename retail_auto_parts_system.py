@@ -209,7 +209,7 @@ def customer_menu(customer_id):
 
     #should go to the customer menu of the correct customer_id
     #NOTE: customer login redirects here, need to write HTML for customer_menu
-    #relevant functions: list_parts, view_customer_orders
+    #relevant functions: list_parts, view_customer_orders, place_order
     parts = list_parts()
     orders=view_customer_orders(customer_id)
     return render_template('customer_menu.html', parts=parts, orders=orders)
