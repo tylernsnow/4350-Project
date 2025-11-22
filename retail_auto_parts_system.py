@@ -36,18 +36,46 @@ def get_store_id(employee_id):
         return row['store_id']
     return None
 
-#TODO:
-# get any employee id
-def get_employee_id():
+#get any store to ship a part
+def get_part_store():
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("SELECT employee_id FROM Employee LIMIT 1")
+
+    # Query to get any store_id (without filtering by part_id)
+    cur.execute("""
+        SELECT store_id 
+        FROM Store
+        LIMIT 1
+    """)
+
     row = cur.fetchone()
     cur.close()
     conn.close()
+
     if row:
-        return row[0]
-    return None
+        return row[0]  # Return the store_id
+    return None  # If no store found
+
+# get any employee id from store
+def get_employee_id(store_id):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    # Query to get an employee from the specified store_id
+    cur.execute("""
+        SELECT employee_id 
+        FROM Employee 
+        WHERE store_id = %s
+        LIMIT 1
+    """, (store_id,))
+
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+
+    if row:
+        return row[0]  # Return the employee_id
+    return None  # If no employee found in the store
 
 # customer login
 def customer_login(un, pw):
@@ -127,63 +155,54 @@ def list_parts():
 
     return parts
 
-#TODO:
 # place order
-def place_order(cid):
-    list_parts()
-    pid = input("Part ID: ").strip()
-    qty_str = input("Qty: ").strip()
+def place_order(customer_id):
+    #list_parts()
+    if request.method=='POST':
+        pid = request.form['part_id'].strip()
+        quantity_str = request.form['part_id'].strip()
 
-    try:
-        qty = int(qty_str)
-    except ValueError:
-        print("Invalid quantity.\n")
-        return
+        try:
+            quantity = int(quantity_str)
+        except ValueError:
+            return render_template('place_order.html', customer_id=customer_id, message="Invalid part ID.")
+        
+        conn = get_connection()
+        cur = conn.cursor()
 
-    conn = get_connection()
-    cur = conn.cursor()
+        # get price
+        cur.execute("SELECT price FROM AutoPart WHERE part_id = %s", (pid,))
+        row = cur.fetchone()
+        if not row:
+            return render_template('place_order.html', customer_id=customer_id, message="Invalid part ID.")
+        price = row[0]
+        total = price * quantity
 
-    # get price
-    cur.execute("SELECT price FROM AutoPart WHERE part_id = %s", (pid,))
-    row = cur.fetchone()
-    if not row:
-        print("Invalid part.\n")
+        store_id=get_part_store()
+        emp_id=get_employee_id(store_id)
+        if not store_id or not emp_id:
+            render_template('place_order.html', customer_id=customer_id, message="No store/employee found in DB.")
+        
+        # Insert into 'Order' table
+        cur.execute("""
+            INSERT INTO `Order`
+            (customer_id, store_id, employee_id, order_date, delivery_date, total_amount, payment_status)
+            VALUES (%s, %s, %s, CURDATE(), DATE_ADD(CURDATE(), INTERVAL 3 DAY), %s, %s)
+        """, (customer_id, store_id, emp_id, total, "Pending"))
+        order_id = cur.lastrowid
+        cur.execute("""
+            INSERT INTO OrderdDetail (order_id, part_id, quantity, subtotal)
+            VALUES (%s, %s, %s, %s)
+        """, (order_id, pid, quantity, total))
+        # Commit transaction
+        conn.commit()
         cur.close()
         conn.close()
-        return
 
-    price = row[0]
-    total = price * qty
-
-    # pick store and employee
-    store_id = get_store_id()
-    emp_id = get_employee_id()
-    if not store_id or not emp_id:
-        print("No store/employee found in DB.\n")
-        cur.close()
-        conn.close()
-        return
-
-    # insert into Order (table name uses backticks)
-    cur.execute("""
-        INSERT INTO `Order`
-        (customer_id, store_id, employee_id, order_date, delivery_date, total_amount, payment_status)
-        VALUES (%s, %s, %s, CURDATE(), DATE_ADD(CURDATE(), INTERVAL 3 DAY), %s, %s)
-    """, (cid, store_id, emp_id, total, "Pending"))
-
-    oid = cur.lastrowid
-
-    # order detail
-    cur.execute("""
-        INSERT INTO orderdetail (order_id, part_id, quantity, subtotal)
-        VALUES (%s, %s, %s, %s)
-    """, (oid, pid, qty, total))
-
-    conn.commit()
-    cur.close()
-    conn.close()
-
-    print(f"\nOrder placed. ID: {oid} | Total: ${total}\n")
+        # Show success message
+        return render_template('place_order.html', customer_id=customer_id, message=f"Order placed successfully! Order ID: {order_id} | Total: ${total}")
+    # Handle GET request (display form)
+    return render_template('place_order.html', customer_id=customer_id)
 
 # view customer orders
 def view_customer_orders(customer_id):
@@ -278,8 +297,8 @@ def view_all_orders():
 # store menu
 def store_menu(employee_id):
 
-    #should go to the store menu of the employee_id
-    #NOTE: employee login redirects here, need to write HTML for employee_menu
+    #goes to the store menu of the store linked to employee_id
+    #NOTE: employee login redirects here, but need to finish HTML for employee_menu
     #relevant functions: view_all_orders, add_part, place_order, get_store_id, get_employee_id
     #include button to add part, button to place order
     store_id=get_store_id(employee_id)

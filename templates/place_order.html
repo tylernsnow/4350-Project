@@ -1,0 +1,28 @@
+<!-- templates/place_order.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Place Order</title>
+</head>
+<body>
+    <h1>Place Order</h1>
+    
+    <!-- Form to place order -->
+    <form action="{{ url_for('place_order', customer_id=customer_id) }}" method="POST">
+        <label for="part_id">Part ID:</label>
+        <input type="text" id="part_id" name="part_id" required><br><br>
+
+        <label for="quantity">Quantity:</label>
+        <input type="text" id="quantity" name="quantity" required><br><br>
+
+        <button type="submit">Place Order</button>
+    </form>
+
+    <!-- Display success/error message -->
+    {% if message %}
+        <p>{{ message }}</p>
+    {% endif %}
+</body>
+</html>
