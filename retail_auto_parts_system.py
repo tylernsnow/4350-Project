@@ -117,13 +117,12 @@ def list_parts():
     cur = conn.cursor(dictionary=True)
 
     cur.execute("SELECT * FROM autopart")
-    print("\n--- Parts ---")
-    for x in cur:
-        print(f"{x['part_id']}: {x['part_name']} | {x['category']} | ${x['price']} | {x['stock_qty']} left")
-    print("-------------\n")
+    parts = cur.fetchall()
 
     cur.close()
     conn.close()
+
+    return parts
 
 #TODO:
 # place order
@@ -185,7 +184,7 @@ def place_order(cid):
 
 #TODO:
 # view customer orders
-def view_customer_orders(cid):
+def view_customer_orders(customer_id):
     conn = get_connection()
     cur = conn.cursor(dictionary=True)
 
@@ -194,15 +193,13 @@ def view_customer_orders(cid):
         FROM `Order`
         WHERE customer_id = %s
         ORDER BY order_date DESC
-    """, (cid,))
+    """, (customer_id,))
 
-    print("\n--- Your Orders ---")
-    for x in cur:
-        print(f"{x['order_id']} | ${x['total_amount']} | {x['payment_status']}")
-    print("-------------------\n")
+    orders=cur.fetchall()
 
     cur.close()
     conn.close()
+    return orders
 
 #Flask routes:
 
@@ -212,8 +209,10 @@ def customer_menu(customer_id):
 
     #should go to the customer menu of the correct customer_id
     #NOTE: customer login redirects here, need to write HTML for customer_menu
+    #relevant functions: list_parts, view_customer_orders
     parts = list_parts()
-    return render_template('customer_menu.html', parts=parts)
+    orders=view_customer_orders(customer_id)
+    return render_template('customer_menu.html', parts=parts, orders=orders)
 
 #TODO:
 # add part

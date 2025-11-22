@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Menu</title>
+    <style>
+        /* Add some basic styling */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        .btn {
+            background-color: #4c87af;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .btn:hover {
+            background-color: #204f6f;
+        }
+    </style>
+</head>
+<body>
+    <h1>Welcome, Customer {{ customer_id }}</h1>
+
+    <h2>Available Parts</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Part ID</th>
+                <th>Part Name</th>
+                <th>Category</th>
+                <th>Price</th>
+                <th>Stock Quantity</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for part in parts %}
+                <tr>
+                    <td>{{ part.part_id }}</td>
+                    <td>{{ part.part_name }}</td>
+                    <td>{{ part.category }}</td>
+                    <td>${{ part.price }}</td>
+                    <td>{{ part.stock_qty }} left</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>Your Orders</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>Order Date</th>
+                <th>Total Amount</th>
+                <th>Payment Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in orders %}
+                <tr>
+                    <td>{{ order.order_id }}</td>
+                    <td>{{ order.order_date }}</td>
+                    <td>${{ order.total_amount }}</td>
+                    <td>{{ order.payment_status }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="{{ url_for('home') }}" class="btn">Return Home</a>
+</body>
+</html>
