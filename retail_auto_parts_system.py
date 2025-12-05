@@ -156,51 +156,83 @@ def list_parts():
     return parts
 
 # place order
+@app.route('/customer/<int:customer_id>/order', methods=['GET', 'POST'])
 def place_order(customer_id):
-    #list_parts()
-    if request.method=='POST':
+    if request.method == 'POST':
         pid = request.form['part_id'].strip()
-        quantity_str = request.form['part_id'].strip()
+        quantity_str = request.form['quantity'].strip()
 
         try:
             quantity = int(quantity_str)
+            if quantity <= 0:
+                raise ValueError
         except ValueError:
-            return render_template('place_order.html', customer_id=customer_id, message="Invalid part ID.")
-        
+            parts = list_parts()
+            return render_template(
+                'place_order.html',
+                customer_id=customer_id,
+                parts=parts,
+                message="Invalid quantity."
+            )
+
         conn = get_connection()
         cur = conn.cursor()
 
-        # get price
         cur.execute("SELECT price FROM AutoPart WHERE part_id = %s", (pid,))
         row = cur.fetchone()
         if not row:
-            return render_template('place_order.html', customer_id=customer_id, message="Invalid part ID.")
+            cur.close()
+            conn.close()
+            parts = list_parts()
+            return render_template(
+                'place_order.html',
+                customer_id=customer_id,
+                parts=parts,
+                message="Invalid part ID."
+            )
+
         price = row[0]
         total = price * quantity
 
-        store_id=get_part_store()
-        emp_id=get_employee_id(store_id)
+        store_id = get_part_store()
+        emp_id = get_employee_id(store_id)
         if not store_id or not emp_id:
-            render_template('place_order.html', customer_id=customer_id, message="No store/employee found in DB.")
-        
-        # Insert into 'Order' table
+            cur.close()
+            conn.close()
+            parts = list_parts()
+            return render_template(
+                'place_order.html',
+                customer_id=customer_id,
+                parts=parts,
+                message="No store/employee found in DB."
+            )
+
+        # insert order + details...
         cur.execute("""
             INSERT INTO `Order`
             (customer_id, store_id, employee_id, order_date, delivery_date, total_amount, payment_status)
             VALUES (%s, %s, %s, CURDATE(), DATE_ADD(CURDATE(), INTERVAL 3 DAY), %s, %s)
         """, (customer_id, store_id, emp_id, total, "Pending"))
         order_id = cur.lastrowid
+
         cur.execute("""
-            INSERT INTO OrderdDetail (order_id, part_id, quantity, subtotal)
+            INSERT INTO OrderDetail (order_id, part_id, quantity, subtotal)
             VALUES (%s, %s, %s, %s)
         """, (order_id, pid, quantity, total))
-        # Commit transaction
+
         conn.commit()
         cur.close()
         conn.close()
 
-        # Show success message
-        return render_template('place_order.html', customer_id=customer_id, message=f"Order placed successfully! Order ID: {order_id} | Total: ${total}")
+        flash(f"Order placed successfully! Order ID: {order_id} | Total: ${total}")
+        return redirect(url_for('customer_menu', customer_id=customer_id))
+
+    # GET: show form
+    parts = list_parts()
+    return render_template('place_order.html', customer_id=customer_id, parts=parts)
+
+    # Show success message
+    return render_template('place_order.html', customer_id=customer_id, message=f"Order placed successfully! Order ID: {order_id} | Total: ${total}")
     # Handle GET request (display form)
     return render_template('place_order.html', customer_id=customer_id)
 
@@ -233,7 +265,7 @@ def customer_menu(customer_id):
     #TODO: add button to place_order
     parts = list_parts()
     orders=view_customer_orders(customer_id)
-    return render_template('customer_menu.html', parts=parts, orders=orders)
+    return render_template('customer_menu.html', parts=parts, orders=orders,   customer_id=customer_id)
 
 # add part
 @app.route('/add_part')

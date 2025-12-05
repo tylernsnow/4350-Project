@@ -61,8 +61,7 @@
         </tbody>
     </table>
 
-    <a href="{{ url_for('place_order') }}" class="btn">Place Order</a>
-    
+    <a href="{{ url_for('place_order', customer_id=customer_id) }}" class="btn">Place Order</a>
     <h2>Your Orders</h2>
     <table>
         <thead>

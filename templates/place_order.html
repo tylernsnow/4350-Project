@@ -1,4 +1,3 @@
-<!-- templates/place_order.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,21 +7,31 @@
 </head>
 <body>
     <h1>Place Order</h1>
-    
-    <!-- Form to place order -->
+
+    <!-- Order Form -->
     <form action="{{ url_for('place_order', customer_id=customer_id) }}" method="POST">
-        <label for="part_id">Part ID:</label>
-        <input type="text" id="part_id" name="part_id" required><br><br>
+
+        <label for="part_id">Select Part:</label>
+	<select id="part_id" name="part_id" required>
+    		{% for part in parts %}
+       			<option value="{{ part['part_id'] }}">
+            			{{ part['part_id'] }} - {{ part['part_name'] }} (${{ '%.2f'|format(part['price']) }})
+        		</option>
+    		{% endfor %}
+	</select>
+	<br><br>
 
         <label for="quantity">Quantity:</label>
-        <input type="text" id="quantity" name="quantity" required><br><br>
+        <input type="number" id="quantity" name="quantity" min="1" required><br><br>
 
         <button type="submit">Place Order</button>
     </form>
 
-    <!-- Display success/error message -->
     {% if message %}
-        <p>{{ message }}</p>
+        <p style="color: red;">{{ message }}</p>
     {% endif %}
+
+    <br>
+    <a href="{{ url_for('customer_menu', customer_id=customer_id) }}">Back to Customer Menu</a>
 </body>
 </html>
