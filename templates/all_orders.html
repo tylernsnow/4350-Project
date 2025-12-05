@@ -2,46 +2,36 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>All Orders</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-        table, th, td {
-            border: 1px solid black;
-        }
-        th, td {
-            padding: 10px;
-            text-align: left;
-        }
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        table, th, td { border: 1px solid black; }
+        th, td { padding: 8px; text-align: left; }
         .btn {
             background-color: #4c87af;
             color: white;
-            padding: 10px 20px;
+            padding: 8px 16px;
             text-decoration: none;
             border-radius: 5px;
         }
-        .btn:hover {
-            background-color: #204f6f;
-        }
+        .btn:hover { background-color: #204f6f; }
     </style>
 </head>
 <body>
-<h2>All Orders</h2>
+    <h1>All Orders</h1>
+
     <table>
         <thead>
             <tr>
                 <th>Order ID</th>
+                <th>Order Date</th>
                 <th>Customer</th>
-                <th>Store ID</th>
+                <th>Store</th>
                 <th>Employee</th>
+                <th>Part</th>
+                <th>Quantity</th>
+                <th>Line Subtotal</th>
                 <th>Total Amount</th>
                 <th>Payment Status</th>
             </tr>
@@ -50,14 +40,28 @@
             {% for order in orders %}
                 <tr>
                     <td>{{ order.order_id }}</td>
-                    <td>{{ order.customer_id }}</td>
-                    <td>{{ order.store_id }}</td>
-                    <td>{{ order.employee_id }}</td>
+                    <td>{{ order.order_date }}</td>
+                    <td>{{ order.customer_name }}</td>
+                    <td>{{ order.store_name }}</td>
+                    <td>{{ order.employee_name }}</td>
+                    <td>{{ order.part_name }}</td>
+                    <td>{{ order.quantity }}</td>
+                    <td>${{ order.line_subtotal }}</td>
                     <td>${{ order.total_amount }}</td>
                     <td>{{ order.payment_status }}</td>
                 </tr>
             {% endfor %}
         </tbody>
     </table>
-    <a href="{{ url_for('store_menu') }}" class="btn">Back</a>
+
+    <!-- TEMP DEBUG: show raw dicts so you can see keys/values -->
+    <h3>Debug dump (remove when done):</h3>
+    <pre>
+{% for order in orders %}
+{{ order }}
+{% endfor %}
+    </pre>
+
+    <a href="{{ url_for('store_menu', employee_id=employee_id) }}" class="btn">Back to Store Menu</a>
 </body>
+</html>

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+﻿from flask import Flask, render_template, request, redirect, url_for, flash
 import mysql.connector
 from getpass import getpass
 
@@ -20,10 +20,9 @@ def get_connection():
         database=DB_NAME
     )
 
-# get store id from employee id
 def get_store_id(employee_id):
     conn = get_connection()
-    cur = conn.cursor()
+    cur = conn.cursor(dictionary=True)
     cur.execute("""
         SELECT store_id
         FROM Employee
@@ -208,24 +207,24 @@ def place_order(customer_id):
             )
 
         # insert order + details...
-        cur.execute("""
+    cur.execute("""
             INSERT INTO `Order`
             (customer_id, store_id, employee_id, order_date, delivery_date, total_amount, payment_status)
             VALUES (%s, %s, %s, CURDATE(), DATE_ADD(CURDATE(), INTERVAL 3 DAY), %s, %s)
-        """, (customer_id, store_id, emp_id, total, "Pending"))
-        order_id = cur.lastrowid
+    """, (customer_id, store_id, emp_id, total, "Pending"))
+    order_id = cur.lastrowid
 
-        cur.execute("""
+    cur.execute("""
             INSERT INTO OrderDetail (order_id, part_id, quantity, subtotal)
             VALUES (%s, %s, %s, %s)
-        """, (order_id, pid, quantity, total))
+    """, (order_id, pid, quantity, total))
 
-        conn.commit()
-        cur.close()
-        conn.close()
+    conn.commit()
+    cur.close()
+    conn.close()
 
-        flash(f"Order placed successfully! Order ID: {order_id} | Total: ${total}")
-        return redirect(url_for('customer_menu', customer_id=customer_id))
+    flash(f"Order placed successfully! Order ID: {order_id} | Total: ${total}")
+    return redirect(url_for('customer_menu', customer_id=customer_id))
 
     # GET: show form
     parts = list_parts()
@@ -268,73 +267,95 @@ def customer_menu(customer_id):
     return render_template('customer_menu.html', parts=parts, orders=orders,   customer_id=customer_id)
 
 # add part
-@app.route('/add_part')
+@app.route('/add_part', methods=['GET', 'POST'])
 def add_part():
-    name = input("Name: ")
-    cat = input("Category: ")
-    price_str = input("Price: ").strip()
-    qty_str = input("Qty: ").strip()
-    cond = input("Condition: ")
-    manu = input("Manufacturer: ")
     if request.method == 'POST':
-        name=request.form['name']
-        price_str=request.form['price'].strip()
-        qty_str=request.form['quantity'].strip()
-        condition=request.form['condition']
-        manufacturer=request.form['manufacturer']
+        # Get form data from the HTML form
+        name = request.form['name'].strip()
+        cat = request.form['category'].strip()
+        price_str = request.form['price'].strip()
+        qty_str = request.form['quantity'].strip()
+        cond = request.form['condition'].strip()
+        
 
+        # Validate numeric fields
         try:
             price = float(price_str)
             qty = int(qty_str)
         except ValueError:
-            print("Invalid price or qty.\n")
-            return
+            # Re-render the form with an error message
+            return render_template(
+                'add_part.html',
+                message="Invalid price or quantity. Please enter numeric values.",
+                name=name,
+                category=cat,
+                price=price_str,
+                quantity=qty_str,
+                condition=cond,
+                
+            )
 
+        # Insert into database
         conn = get_connection()
         cur = conn.cursor()
 
         cur.execute("""
-            INSERT INTO AutoPart (part_name, category, price, stock_qty, condition, manufacturer)
-            VALUES (%s, %s, %s, %s, %s, %s)
-        """, (name, cat, price, qty, cond, manu))
+            INSERT INTO AutoPart (part_name, category, price, stock_qty, `condition`)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (name, cat, price, qty, cond))
 
         conn.commit()
         cur.close()
         conn.close()
 
-        return render_template('add_part.html', message="Part added successfully")
+        # Show success message and clear form
+        return render_template('add_part.html', message="Part added successfully!")
+
+    # GET request → just show the empty form
     return render_template('add_part.html')
 
+
 # view all orders
-@app.route('/all_orders')
-def view_all_orders():
+@app.route('/all_orders/<int:employee_id>')
+def view_all_orders(employee_id):
     conn = get_connection()
+    # dictionary=True is IMPORTANT so we can use order.customer_name, etc.
     cur = conn.cursor(dictionary=True)
 
     cur.execute("""
-        SELECT o.order_id, c.name AS Customer, s.store_name AS store,
-               e.name AS employee, o.total_amount, o.payment_status
+        SELECT
+            o.order_id,
+            o.order_date,
+            c.name       AS customer_name,
+            s.store_name AS store_name,
+            e.name       AS employee_name,
+            p.part_name  AS part_name,
+            od.quantity  AS quantity,
+            od.subtotal  AS line_subtotal,
+            o.total_amount,
+            o.payment_status
         FROM `Order` o
-        LEFT JOIN Customer c ON o.customer_id = c.customer_id
-        LEFT JOIN Store s ON o.store_id = s.store_id
-        LEFT JOIN Employee e ON o.employee_id = e.employee_id
+        LEFT JOIN Customer    c  ON o.customer_id = c.customer_id
+        LEFT JOIN Store       s  ON o.store_id    = s.store_id
+        LEFT JOIN Employee    e  ON o.employee_id = e.employee_id
+        LEFT JOIN OrderDetail od ON o.order_id    = od.order_id   -- CHANGE name if needed
+        LEFT JOIN AutoPart    p  ON od.part_id    = p.part_id
         ORDER BY o.order_id DESC
     """)
 
+    orders = cur.fetchall()
     cur.close()
     conn.close()
-    return render_template('all_orders.html')
 
-@app.route('/store_menu')
-# store menu
+    return render_template(
+        'all_orders.html',
+        orders=orders,
+        employee_id=employee_id
+    )
+@app.route('/store_menu/<int:employee_id>')
 def store_menu(employee_id):
-
-    #goes to the store menu of the store linked to employee_id
-    #NOTE: employee login redirects here, but need to finish HTML for employee_menu
-    #relevant functions: view_all_orders, add_part, place_order, get_store_id, get_employee_id
-    #include button to add part, button to place order
-    store_id=get_store_id(employee_id)
-    return render_template('store_menu.html', store_id)
+    store_id = get_store_id(employee_id)
+    return render_template('store_menu.html', store_id=store_id, employee_id=employee_id)
 
 if __name__ == "__main__":
     app.run(debug = True)
